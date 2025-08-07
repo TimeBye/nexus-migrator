@@ -27,6 +27,7 @@ own tool and share it with the community.
     * Cause of the component migration skip/failure
     * Already migrated components
 
+
 ## Usage
 
 1. Download a binary from [releases](https://github.com/cdqag/nexus-migrator/releases) page.
