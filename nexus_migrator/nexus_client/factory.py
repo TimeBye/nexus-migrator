@@ -6,6 +6,7 @@ from .models.MavenComponent import MavenComponent
 from .models.GradlePluginComponent import GradlePluginComponent
 from .models.RawComponent import RawComponent
 from .models.PypiComponent import PypiComponent
+from .models.NpmComponent import NpmComponent
 
 
 def factory_component(item_raw: dict) -> Optional[Component]:
@@ -23,6 +24,9 @@ def factory_component(item_raw: dict) -> Optional[Component]:
 
     elif item_raw["format"] == "raw":
         return create_raw_component(item_raw)
+
+    elif item_raw["format"] == "npm":
+        return create_npm_component(item_raw)
 
     raise ValueError(f"Unsupported format: {item_raw['format']}")
 
@@ -64,3 +68,18 @@ def create_helm_component(item_raw: dict) -> Optional[HelmComponent]:
 
 def create_raw_component(item_raw: dict) -> Optional[RawComponent]:
     return RawComponent(**item_raw)
+
+def create_npm_component(item_raw: dict) -> Optional[NpmComponent]:
+    component = NpmComponent(**item_raw)
+
+    # Return none if there is no tgz file in the assets
+    found = False
+    for asset in component.assets:
+        if asset.path.suffix == ".tgz":
+            found = True
+            break
+
+    if not found:
+        raise ValueError("No TGZ file found in component")
+
+    return component

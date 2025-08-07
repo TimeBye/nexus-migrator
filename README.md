@@ -18,6 +18,7 @@ own tool and share it with the community.
     * Helm
     * PyPI
     * Raw
+    * NPM
 
 * Can filter by last downloaded date (in days)
 * Keeps a history for each migration run:
