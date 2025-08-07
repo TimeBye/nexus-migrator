@@ -4,7 +4,10 @@ import httpx
 from httpx_retries import RetryTransport, Retry
 
 from .factory import factory_component
+import logging
 from .models.Component import Component
+
+logger = logging.getLogger(__name__)
 from ..history import get_historian
 
 HTTP_TIMEOUT = 600  # seconds
@@ -81,10 +84,25 @@ class NexusClient:
         component.download(self)
 
     def upload_component(self, component: Component, repository: str):
+        logger.info(f"Uploading component {component.name}:{component.version} to repository {repository}")
         payload = component.get_upload_payload()
 
         params = {"repository": repository}
-        res = self.rest_api.post("components", params=params, data=payload.data, files=payload.files, timeout=HTTP_TIMEOUT)
+        endpoint = "components"
+        
+        # Use npm-specific endpoint if available
+        if hasattr(component, '__class__') and component.__class__.__name__ == 'NpmComponent':
+            # For Nexus 3, npm packages are uploaded to the components endpoint with specific metadata
+            # See: https://help.sonatype.com/repomanager3/nexus-repository-administration/formats/npm-registry#NPMRegistry-UploadingPackages
+            endpoint = "components"
+            logger.info(f"Using npm-specific upload endpoint: {endpoint}")
+        else:
+            logger.info(f"Upload endpoint: {endpoint}, params: {params}")
+            
+        res = self.rest_api.post(endpoint, params=params, data=payload.data, files=payload.files, timeout=HTTP_TIMEOUT)
 
+        logger.info(f"Upload response status: {res.status_code}")
         if res.status_code != 204:
+            logger.error(f"Upload failed with status {res.status_code}: {res.text}")
             raise Exception(f"Error uploading component: {res.text}")
+        logger.info(f"Successfully uploaded component {component.name}:{component.version}")

@@ -72,14 +72,18 @@ def create_raw_component(item_raw: dict) -> Optional[RawComponent]:
 def create_npm_component(item_raw: dict) -> Optional[NpmComponent]:
     component = NpmComponent(**item_raw)
 
-    # Return none if there is no tgz file in the assets
-    found = False
+    # Check for required assets
+    has_tgz = False
+    has_package_json = False
     for asset in component.assets:
         if asset.path.suffix == ".tgz":
-            found = True
-            break
+            has_tgz = True
+        elif asset.path.name == "package.json":
+            has_package_json = True
 
-    if not found:
+    if not has_tgz:
         raise ValueError("No TGZ file found in component")
+    if not has_package_json:
+        raise ValueError("No package.json found in component assets")
 
     return component
